@@ -96,7 +96,7 @@ jobs:
       # List build output for debugging purposes
       - name: List build output
         run: |
-          dir .\bin\Release\
+          dir .\bin\Release\net8.0
 
       # Create a release
       - name: Create Release
