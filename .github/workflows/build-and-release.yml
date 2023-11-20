@@ -91,9 +91,9 @@ jobs:
         run: |
           dotnet restore PdfCompressionService.csproj
           dotnet build PdfCompressionService.csproj --configuration Release
-          dotnet publish PdfCompressionService.csproj -c Release -r win-x64 --output ./publish_output/win-x64
-          dotnet publish PdfCompressionService.csproj -c Release -r osx-x64 --output ./publish_output/osx-x64
-          dotnet publish PdfCompressionService.csproj -c Release -r osx-arm64 --output ./publish_output/osx-arm64
+          dotnet publish PdfCompressionService.csproj -c Release -r win-x64 -p:PublishSingleFile=true --output ./publish_output/win-x64
+          dotnet publish PdfCompressionService.csproj -c Release -r osx-x64 -p:PublishSingleFile=true --output ./publish_output/osx-x64
+          dotnet publish PdfCompressionService.csproj -c Release -r osx-arm64 -p:PublishSingleFile=true --output ./publish_output/osx-arm64
 
       # List build output for debugging purposes
       - name: List build output
@@ -121,7 +121,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/release/.net8.0/publish/win-x64/PdfCompressionService_v${{ steps.version.outputs.version }}_win-x64.exe
+          asset_path: ./publish_output/win-x64/PdfCompressionService.exe
           asset_name: PdfCompressionService_v${{ steps.version.outputs.version }}_win-x64.exe
           asset_content_type: application/octet-stream
 
@@ -132,7 +132,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./publish_output/osx-x64/PdfCompressionService_v${{ steps.version.outputs.version }}_osx-x64
+          asset_path: ./publish_output/osx-x64/PdfCompressionService
           asset_name: PdfCompressionService_v${{ steps.version.outputs.version }}_osx-x64
           asset_content_type: application/octet-stream
 
@@ -143,6 +143,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./publish_output/osx-arm64/PdfCompressionService_v${{ steps.version.outputs.version }}_osx-arm64
+          asset_path: ./publish_output/osx-arm64/PdfCompressionService
           asset_name: PdfCompressionService_v${{ steps.version.outputs.version }}_osx-arm64
           asset_content_type: application/octet-stream
