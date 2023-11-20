@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>true</InvariantGlobalization>
     <LangVersion>latest</LangVersion>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <RuntimeIdentifiers>win-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
     <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
