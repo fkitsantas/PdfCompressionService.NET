@@ -1,3 +1,5 @@
+using PdfCompressionService.Services.Interfaces;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Set the application to listen on port 7777
@@ -10,6 +12,9 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Register PdfCompressionService
+builder.Services.AddScoped<PdfCompressionService.Services.Interfaces.IPdfCompressionService, PdfCompressionService.Services.PdfCompressionService>();
 
 var app = builder.Build();
 
