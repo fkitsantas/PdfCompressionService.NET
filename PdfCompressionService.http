@@ -1,6 +1,9 @@
-@PdfCompressionService_HostAddress = http://localhost:5189
-
-GET {{PdfCompressionService_HostAddress}}/weatherforecast/
-Accept: application/json
+@PdfCompressionService_HostAddress = http://localhost:7777
 
 ###
+
+# Compress PDF
+POST {{PdfCompressionService_HostAddress}}/compressPdf
+Content-Type: multipart/form-data
+
+file: < /path/to/your/sample.pdf

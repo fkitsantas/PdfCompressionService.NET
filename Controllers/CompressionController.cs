@@ -1,82 +1,47 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
+using System.Threading.Tasks;
+using PdfCompressionService.Services.Interfaces;
 
 namespace PdfCompressionService.Controllers
 {
-    public class CompressionController : Controller
+    [ApiController]
+    [Route("")]
+    public class CompressionController : ControllerBase
     {
-        // GET: CompressionController
-        public ActionResult Index()
+        private readonly IPdfCompressionService _pdfCompressionService;
+
+        public CompressionController(IPdfCompressionService pdfCompressionService)
         {
-            return View();
+            _pdfCompressionService = pdfCompressionService;
         }
 
-        // GET: CompressionController/Details/5
-        public ActionResult Details(int id)
+        [HttpPost("compressPdf")]
+        public async Task<IActionResult> CompressPdf(IFormFile pdfFile)
         {
-            return View();
-        }
+            if (pdfFile == null || pdfFile.Length == 0)
+            {
+                return BadRequest("A PDF file is required.");
+            }
 
-        // GET: CompressionController/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: CompressionController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
-        {
             try
             {
-                return RedirectToAction(nameof(Index));
+                using var inputStream = new MemoryStream();
+                await pdfFile.CopyToAsync(inputStream);
+                var compressedStream = await _pdfCompressionService.CompressPdfAsync(inputStream);
+
+                if (compressedStream == null)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, "PDF compression failed.");
+                }
+
+                compressedStream.Position = 0;
+                return File(compressedStream, "application/pdf", "compressed.pdf");
             }
             catch
             {
-                return View();
-            }
-        }
-
-        // GET: CompressionController/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
-        }
-
-        // POST: CompressionController/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: CompressionController/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: CompressionController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while compressing the PDF.");
             }
         }
     }
