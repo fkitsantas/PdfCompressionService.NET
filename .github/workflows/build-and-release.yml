@@ -98,9 +98,10 @@ jobs:
       # List build output for debugging purposes
       - name: List build output
         run: |
-          dir ./bin/release/.net8.0/publish/publish_output/win-x64  # List the contents of the Windows x64 output folder
-          dir ./bin/release/publish/publish_output/osx-x64  # List the contents of the macOS x64 output folder
-          dir ./bin/release/publish/publish_output/osx-arm64  # List the contents of the macOS arm64 output folder
+          dir ./publish_output/win-x64  # List the contents of the Windows x64 output folder
+          dir ./publish_output/osx-x64  # List the contents of the macOS x64 output folder
+          dir ./publish_output/osx-arm64  # List the contents of the macOS arm64 output folder
+
           
       # Create a release
       - name: Create Release
