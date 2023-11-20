@@ -1,0 +1,121 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.github/workflows/**'
+      - 'Resources/**'
+      - 'README.md'
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      # Checks-out the repository
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      # Get the last commit message
+      - name: Get the last commit message
+        id: commit_message
+        run: |
+          $commitMessage = git log -1 --pretty=%B
+          echo "::set-output name=message::$commitMessage"
+
+      # Calculate version number
+      - name: Calculate version
+        id: version
+        run: |
+          # Ensure csproj file exists
+          if (!(Test-Path "PdfCompressionService.csproj")) {
+            Write-Error "PdfCompressionService.csproj file not found"
+            exit 1
+          }
+
+          # Fetch current version from csproj
+          [xml]$csproj = Get-Content "PdfCompressionService.csproj"
+          $currentVersion = $csproj.Project.PropertyGroup.Version
+          if ([string]::IsNullOrEmpty($currentVersion)) {
+            Write-Error "Version not found in PdfCompressionService.csproj"
+            exit 1
+          }
+
+          $versionParts = $currentVersion.Split('.')
+          $major = [int]$versionParts[0]
+          $minor = [int]$versionParts[1]
+          $build = [int]$versionParts[2]
+
+          # Calculate new version
+          $commitCount = git rev-list --count HEAD
+          $build = ($build + $commitCount) % 10
+          if ($build -eq 0 -and $commitCount -ne 0) {
+            $minor += 1
+            if ($minor -eq 10) {
+              $major += 1
+              $minor = 0
+            }
+          }
+          $newVersion = "$major.$minor.$build"
+          echo "New version: $newVersion"
+          echo "::set-output name=version::$newVersion"
+
+      # Update .csproj file
+      - name: Update project version
+        run: |
+          $csprojPath = "PdfCompressionService.csproj"
+          [xml]$csproj = Get-Content $csprojPath
+
+          # Check if Version exists and update it
+          if ($csproj.Project.PropertyGroup.Version) {
+              $csproj.Project.PropertyGroup.Version = "${{ steps.version.outputs.version }}"
+          } else {
+              Write-Error "<Version> not found in $csprojPath"
+              exit 1
+          }
+
+          $csproj.Save($csprojPath)
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add $csprojPath
+          git commit -m "Update version to ${{ steps.version.outputs.version }}"
+          git push
+
+      # Build and Publish Project
+      - name: Build and Publish Project
+        run: |
+          dotnet restore PdfCompressionService.csproj
+          dotnet build PdfCompressionService.csproj --configuration Release
+          dotnet publish PdfCompressionService.csproj --configuration Release --output ./publish_output
+
+      # List build output for debugging purposes
+      - name: List build output
+        run: |
+          dir .\bin\Release\
+
+      # Create a release
+      - name: Create Release
+        id: create_release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          automatic_release_tag: ${{ steps.version.outputs.version }}
+          prerelease: false
+          title: "Latest Build v${{ steps.version.outputs.version }}"
+          body: ${{ steps.commit_message.outputs.message }}
+          
+      # Upload Built Executable
+      - name: Upload Built Executable
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./publish_output/
+          asset_name: PdfCompressionService_v${{ steps.version.outputs.version }}
+          asset_content_type: application/octet-stream
