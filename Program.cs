@@ -1,7 +1,10 @@
 var builder = WebApplication.CreateBuilder(args);
 
 // Set the application to listen on port 7777
-builder.WebHost.UseUrls("http://*:7777", "https://*:7777");
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(7777); // Listen for HTTP requests on port 7777
+});
 
 // Add services to the container.
 builder.Services.AddControllers();
