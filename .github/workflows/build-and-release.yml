@@ -109,13 +109,35 @@ jobs:
           title: "Latest Build v${{ steps.version.outputs.version }}"
           body: ${{ steps.commit_message.outputs.message }}
           
-      # Upload Built Executable
-      - name: Upload Built Executable
+      # Upload Windows Executable
+      - name: Upload Windows Executable
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./publish_output/
-          asset_name: PdfCompressionService_v${{ steps.version.outputs.version }}
+          asset_path: ./publish_output/win-x64/PdfCompressionService_v${{ steps.version.outputs.version }}_win-x64.exe
+          asset_name: PdfCompressionService_v${{ steps.version.outputs.version }}_win-x64.exe
+          asset_content_type: application/octet-stream
+
+      # Upload macOS x64 Executable
+      - name: Upload macOS x64 Executable
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./publish_output/osx-x64/PdfCompressionService_v${{ steps.version.outputs.version }}_osx-x64
+          asset_name: PdfCompressionService_v${{ steps.version.outputs.version }}_osx-x64
+          asset_content_type: application/octet-stream
+
+      # Upload macOS arm64 Executable
+      - name: Upload macOS arm64 Executable
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./publish_output/osx-arm64/PdfCompressionService_v${{ steps.version.outputs.version }}_osx-arm64
+          asset_name: PdfCompressionService_v${{ steps.version.outputs.version }}_osx-arm64
           asset_content_type: application/octet-stream
