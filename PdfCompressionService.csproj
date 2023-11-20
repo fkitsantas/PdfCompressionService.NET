@@ -8,6 +8,7 @@
 		<LangVersion>latest</LangVersion>
 		<Version>1.0.1</Version>
 		<RuntimeIdentifiers>win-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
+		<PublishSingleFile>true</PublishSingleFile>
 	</PropertyGroup>
 
 	<ItemGroup>
