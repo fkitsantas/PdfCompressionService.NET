@@ -1,62 +1,53 @@
 ﻿using PdfSharpCore.Pdf;
 using PdfSharpCore.Pdf.IO;
+using PdfCompressionService.Helpers;
 using System.IO;
 using System.Threading.Tasks;
 using PdfCompressionService.Services.Interfaces;
+using PdfSharpCore.Pdf.Advanced;
 
 namespace PdfCompressionService.Services
 {
     public class PdfCompressionService : IPdfCompressionService
     {
-        public PdfCompressionService()
+        public async Task<MemoryStream> CompressPdfAsync(Stream pdfStream)
         {
-        }
-
-        public Task<MemoryStream> CompressPdfAsync(Stream pdfStream)
-        {
-            // Ensure the stream is at the beginning
             pdfStream.Position = 0;
-
-            // Create a new MemoryStream to hold the compressed PDF
             var compressedPdfStream = new MemoryStream();
+            var pdfDocument = PdfReader.Open(pdfStream, PdfDocumentOpenMode.Import);
+            var outputDocument = new PdfDocument();
 
-            try
+            foreach (var page in pdfDocument.Pages)
             {
-                // Load the PDF document from the stream
-                var pdfDocument = PdfReader.Open(pdfStream, PdfDocumentOpenMode.Import);
-
-                // Create a new PDF document
-                var outputDocument = new PdfDocument();
-
-                // Iterate through all pages
-                foreach (var page in pdfDocument.Pages)
+                var resources = page.Elements.GetDictionary("/Resources");
+                if (resources != null)
                 {
-                    // Import the pages into the new document
-                    outputDocument.AddPage(page);
+                    var xObjects = resources.Elements.GetDictionary("/XObject");
+                    if (xObjects != null)
+                    {
+                        foreach (var item in xObjects.Elements.Values)
+                        {
+                            if (item is PdfReference reference)
+                            {
+                                var xObject = reference.Value as PdfDictionary;
+                                if (xObject != null && xObject.Elements.GetString("/Subtype") == "/Image")
+                                {
+                                    var imageStream = new MemoryStream(xObject.Stream.Value);
+                                    var compressedImageStream = await ImageCompressor.CompressImageAsync(imageStream);
 
-                    // TODO: Implement image compression within the page
-                    // This might involve replacing images in the PDF with compressed versions
-                    // The specific implementation will depend on your compression requirements
+                                    // Modify the existing stream instead of creating a new one
+                                    xObject.Stream.Value = compressedImageStream.ToArray();
+                                }
+                            }
+                        }
+                    }
                 }
-
-                // Save the compressed PDF to the MemoryStream
-                outputDocument.Save(compressedPdfStream, false);
-            }
-            catch
-            {
-                // Handle exceptions (e.g., invalid PDF file)
-                return null;
+                outputDocument.AddPage(page);
             }
 
-            // Reset the stream position for reading
+            outputDocument.Save(compressedPdfStream, false);
             compressedPdfStream.Position = 0;
-
-            if (compressedPdfStream == null || compressedPdfStream.Length == 0)
-            {
-                throw new InvalidOperationException("PDF compression failed.");
-            }
-
-            return Task.FromResult(compressedPdfStream);
+            return compressedPdfStream;
         }
     }
 }
